@@ -156,3 +156,12 @@
   components:
   - type: Battery
     startingCharge: 0
+
+- type: entity
+  parent: BaseSMES
+  id: SMESOvercharged
+  suffix: Overcharged, +2MW
+  components:
+  - type: Battery
+    maxCharge: 8000000
+    startingCharge: 10000000

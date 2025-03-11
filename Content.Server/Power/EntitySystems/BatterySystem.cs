@@ -66,7 +66,7 @@ namespace Content.Server.Power.EntitySystems
             var enumerator = AllEntityQuery<PowerNetworkBatteryComponent, BatteryComponent>();
             while (enumerator.MoveNext(out var netBat, out var bat))
             {
-                DebugTools.Assert(bat.CurrentCharge <= bat.MaxCharge && bat.CurrentCharge >= 0);
+             //   DebugTools.Assert(bat.CurrentCharge <= bat.MaxCharge && bat.CurrentCharge >= 0);
                 netBat.NetworkBattery.Capacity = bat.MaxCharge;
                 netBat.NetworkBattery.CurrentStorage = bat.CurrentCharge;
             }
@@ -121,7 +121,17 @@ namespace Content.Server.Power.EntitySystems
             if (value <= 0 ||  !Resolve(uid, ref battery) || battery.CurrentCharge == 0)
                 return 0;
 
-            var newValue = Math.Clamp(0, battery.CurrentCharge - value, battery.MaxCharge);
+            // Allow for mappers to define currentCharge to be greater than maxCharge to improve roundstart Engineering setup
+            var newValue = 0f;
+            if (battery.CurrentCharge > battery.MaxCharge)
+            {
+                newValue = battery.CurrentCharge - value;
+            }
+            else
+            {
+                newValue = Math.Clamp(0, battery.CurrentCharge - value, battery.MaxCharge);
+            }
+
             var delta = newValue - battery.CurrentCharge;
             battery.CurrentCharge = newValue;
 
@@ -154,7 +164,13 @@ namespace Content.Server.Power.EntitySystems
                 return;
 
             var old = battery.CurrentCharge;
-            battery.CurrentCharge = MathHelper.Clamp(value, 0, battery.MaxCharge);
+
+            // Allow for mappers to define currentCharge to be greater than maxCharge to improve roundstart Engineering setup
+            if (battery.CurrentCharge < battery.MaxCharge)
+            {
+                battery.CurrentCharge = MathHelper.Clamp(value, 0, battery.MaxCharge);
+            }
+
             if (MathHelper.CloseTo(battery.CurrentCharge, old) &&
                 !(old != battery.CurrentCharge && battery.CurrentCharge == battery.MaxCharge))
             {
